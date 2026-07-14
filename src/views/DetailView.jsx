@@ -1,8 +1,7 @@
-import { CalendarDays, Edit3, Phone, PhoneCall, Tag, Trash2, UserRound } from "lucide-react-native";
+import { Edit3, Phone, PhoneCall, Tag, Trash2, UserRound } from "lucide-react-native";
 import { Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import tw from "twrnc";
 import Header from "../components/Header";
-import { statusDots } from "../constants/appConstants";
 
 export default function DetailView({ controller, entry }) {
   const dark = controller.themeMode === "dark";
@@ -31,11 +30,11 @@ export default function DetailView({ controller, entry }) {
           <View style={tw`px-5 pt-5 pb-14 ${dark ? "bg-[#303030]" : "bg-[#20252d]"}`}>
             <View style={tw`flex-row items-center justify-between`}>
               <Text style={tw`text-[11px] font-black uppercase tracking-wide ${dark ? "text-[#f4f1ea]" : "text-white"}`}>
-                SL {entry.slno}  •  {entry.date}
+                SL {entry.slno} - {entry.date}
               </Text>
               <View style={tw`flex-row items-center px-3 py-2 rounded-full ${dark ? "bg-[#232323]" : "bg-white/20"}`}>
-                <View style={tw`w-2.5 h-2.5 mr-2 rounded-full ${statusDots[entry.status]}`} />
-                <Text style={tw`text-xs font-black ${dark ? "text-[#f4f1ea]" : "text-white"}`}>{entry.status}</Text>
+                <View style={tw`w-2.5 h-2.5 mr-2 rounded-full ${dark ? "bg-[#f4f1ea]" : "bg-white"}`} />
+                <Text style={tw`text-xs font-black ${dark ? "text-[#f4f1ea]" : "text-white"}`}>{entry.status || "No status"}</Text>
               </View>
             </View>
           </View>
@@ -46,7 +45,7 @@ export default function DetailView({ controller, entry }) {
             </View>
             <Text style={tw`mt-3 text-3xl font-black text-center ${controller.theme.text}`}>{entry.name || "Customer"}</Text>
             <Text style={tw`mt-1 text-sm font-bold text-center ${controller.theme.muted}`}>
-              {entry.type || "No type"} {entry.detail1 ? `• ${entry.detail1}` : ""}
+              {entry.type || "No type"} {entry.detail1 ? `- ${entry.detail1}` : ""}
             </Text>
 
             <View style={tw`w-full flex-row gap-3 mt-5`}>
@@ -78,8 +77,7 @@ export default function DetailView({ controller, entry }) {
           <Text style={tw`text-lg font-black ${controller.theme.text}`}>Customer information</Text>
           <View style={tw`mt-3`}>
             <InfoRow controller={controller} icon={Phone} label="Phone Number" value={phone || "-"} />
-            <InfoRow controller={controller} icon={Tag} label="Type" value={entry.type || "-"} />
-            <InfoRow controller={controller} icon={CalendarDays} label="Estimated Delivery" value={entry.estimateDeliveryDate || "-"} last />
+            <InfoRow controller={controller} icon={Tag} label="Type" value={entry.type || "-"} last />
           </View>
         </View>
 

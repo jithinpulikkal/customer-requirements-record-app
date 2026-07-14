@@ -8,7 +8,7 @@ export default function SettingsView({ controller }) {
   return (
     <View style={tw`flex-1 ${controller.theme.page}`}>
       <Header controller={controller} title="Settings" showBack backTarget="profile" />
-      <ScrollView contentContainerStyle={tw`px-5 pb-44`}>
+      <ScrollView contentContainerStyle={tw`px-5 pb-24`}>
         <View style={tw`p-5 rounded-3xl shadow-sm ${controller.theme.card}`}>
           <Text style={tw`text-lg font-black ${controller.theme.text}`}>Theme</Text>
           <Text style={tw`mt-1 leading-5 ${controller.theme.muted}`}>

@@ -4,15 +4,19 @@ import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-cont
 import tw from "twrnc";
 import BottomBar from "./src/components/BottomBar";
 import { useCustomerController } from "./src/controllers/useCustomerController";
+import CustomerFormView from "./src/views/CustomerFormView";
 import DetailView from "./src/views/DetailView";
 import ExportView from "./src/views/ExportView";
 import FormView from "./src/views/FormView";
 import GetStartedView from "./src/views/GetStartedView";
 import ListView from "./src/views/ListView";
 import LoginView from "./src/views/LoginView";
+import NewEntryView from "./src/views/NewEntryView";
 import ProfileView from "./src/views/ProfileView";
 import SettingsView from "./src/views/SettingsView";
-import StatusView from "./src/views/StatusView";
+import StatusFormView from "./src/views/StatusFormView";
+import DashboardView from "./src/views/DashboardView";
+import TypeFormView from "./src/views/TypeFormView";
 
 export default function App() {
   return (
@@ -25,11 +29,11 @@ export default function App() {
 function AppShell() {
   const controller = useCustomerController();
   const insets = useSafeAreaInsets();
-  const mainScreens = ["list", "profile", "status", "settings", "export"];
+  const mainScreens = ["dashboard", "list", "profile", "settings", "export"];
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      if (controller.screen === "status") {
+      if (controller.screen === "dashboard") {
         Alert.alert("Exit app", "Do you want to close the app?", [
           { text: "Cancel", style: "cancel" },
           { text: "Exit", style: "destructive", onPress: () => BackHandler.exitApp() }
@@ -38,12 +42,12 @@ function AppShell() {
       }
 
       if (["list", "profile", "export", "settings"].includes(controller.screen)) {
-        controller.setScreen("status");
+        controller.setScreen("dashboard");
         return true;
       }
 
-      if (["detail", "form", "login"].includes(controller.screen)) {
-        controller.goBack(controller.loggedIn ? "status" : "start");
+      if (["detail", "form", "login", "newEntry", "customerForm", "statusForm", "typeForm"].includes(controller.screen)) {
+        controller.goBack(controller.loggedIn ? "dashboard" : "start");
         return true;
       }
 
@@ -72,12 +76,16 @@ function AppShell() {
         {controller.screen === "login" && <LoginView controller={controller} />}
         {controller.screen === "list" && <ListView controller={controller} />}
         {controller.screen === "export" && <ExportView controller={controller} />}
+        {controller.screen === "newEntry" && <NewEntryView controller={controller} />}
         {controller.screen === "form" && <FormView controller={controller} />}
+        {controller.screen === "customerForm" && <CustomerFormView controller={controller} />}
+        {controller.screen === "statusForm" && <StatusFormView controller={controller} />}
+        {controller.screen === "typeForm" && <TypeFormView controller={controller} />}
         {controller.screen === "detail" && controller.selectedEntry && (
           <DetailView controller={controller} entry={controller.selectedEntry} />
         )}
         {controller.screen === "profile" && <ProfileView controller={controller} />}
-        {controller.screen === "status" && <StatusView controller={controller} />}
+        {controller.screen === "dashboard" && <DashboardView controller={controller} />}
         {controller.screen === "settings" && <SettingsView controller={controller} />}
         {mainScreens.includes(controller.screen) ? <BottomBar controller={controller} bottomInset={insets.bottom} /> : null}
       </View>

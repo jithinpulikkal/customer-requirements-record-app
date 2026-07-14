@@ -36,7 +36,7 @@ export default function LoginView({ controller }) {
 
   return (
     <View style={tw`flex-1 ${controller.theme.page}`}>
-      <ScrollView contentContainerStyle={tw`px-5 pt-10 pb-8 flex-grow justify-center`}>
+      <ScrollView contentContainerStyle={tw`px-5 pt-10 flex-grow justify-center`}>
         <Pressable
           onPress={() => controller.setScreen("start")}
           style={tw`w-12 h-12 mb-5 items-center justify-center rounded-full ${controller.theme.card}`}

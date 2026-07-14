@@ -33,7 +33,7 @@ export default function ProfileView({ controller }) {
   return (
     <View style={tw`flex-1 ${controller.theme.page}`}>
       <Header controller={controller} title="Profile" showBack />
-      <ScrollView contentContainerStyle={tw`px-5 pb-44`}>
+      <ScrollView contentContainerStyle={tw`px-5 pb-24`}>
         <Pressable
           onPress={() => controller.setScreen("settings")}
           style={tw`h-13 mb-4 px-4 flex-row items-center justify-center rounded-full ${controller.theme.card}`}

@@ -3,13 +3,17 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { Platform } from "react-native";
-import XLSX from "xlsx";
+import * as XLSX from "xlsx";
 import { defaultProfile, defaultTypes, STORAGE_KEYS } from "../constants/appConstants";
 import { toExcelRows } from "./customerModel";
 
+const legacyPresetTypes = ["General", "Urgent", "Service", "Sales", "Follow Up"];
+
 export async function loadAppData() {
-  const [savedEntries, savedTypes, savedProfile, savedLoggedIn, savedTheme] = await Promise.all([
+  const [savedEntries, savedCustomers, savedCustomStatuses, savedTypes, savedProfile, savedLoggedIn, savedTheme] = await Promise.all([
     AsyncStorage.getItem(STORAGE_KEYS.entries),
+    AsyncStorage.getItem(STORAGE_KEYS.customers),
+    AsyncStorage.getItem(STORAGE_KEYS.customStatuses),
     AsyncStorage.getItem(STORAGE_KEYS.types),
     AsyncStorage.getItem(STORAGE_KEYS.profile),
     AsyncStorage.getItem(STORAGE_KEYS.loggedIn),
@@ -18,7 +22,11 @@ export async function loadAppData() {
 
   return {
     entries: savedEntries ? JSON.parse(savedEntries) : [],
-    types: savedTypes ? JSON.parse(savedTypes) : defaultTypes,
+    customers: savedCustomers ? JSON.parse(savedCustomers) : [],
+    customStatuses: savedCustomStatuses ? JSON.parse(savedCustomStatuses) : [],
+    types: savedTypes
+      ? JSON.parse(savedTypes).filter((type) => !legacyPresetTypes.includes(type))
+      : defaultTypes,
     profile: savedProfile ? JSON.parse(savedProfile) : defaultProfile,
     loggedIn: savedLoggedIn === "true",
     themeMode: savedTheme || "light"
@@ -27,6 +35,12 @@ export async function loadAppData() {
 
 export const saveEntries = (entries) =>
   AsyncStorage.setItem(STORAGE_KEYS.entries, JSON.stringify(entries));
+
+export const saveCustomers = (customers) =>
+  AsyncStorage.setItem(STORAGE_KEYS.customers, JSON.stringify(customers));
+
+export const saveCustomStatuses = (customStatuses) =>
+  AsyncStorage.setItem(STORAGE_KEYS.customStatuses, JSON.stringify(customStatuses));
 
 export const saveTypes = (types) =>
   AsyncStorage.setItem(STORAGE_KEYS.types, JSON.stringify(types));
@@ -40,6 +54,8 @@ export const saveThemeMode = (themeMode) => AsyncStorage.setItem(STORAGE_KEYS.th
 
 const excelMimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 const excelUti = "org.openxmlformats.spreadsheetml.sheet";
+const excelXmlMimeType = "application/vnd.ms-excel";
+const excelXmlUti = "com.microsoft.excel.xls";
 
 function createWorkbook(entries) {
   const rows = toExcelRows(entries);
@@ -89,6 +105,51 @@ async function writeCsvFile(entries) {
   return { uri, mimeType: "text/csv", UTI: "public.comma-separated-values-text", fallback: true };
 }
 
+async function writeExcelXmlFile(entries) {
+  const { rows } = createWorkbook(entries);
+  const headers = rows.length ? Object.keys(rows[0]) : [ "SL No", "Date", "Name", "Phone", "Detail 1", "Detail 2", "Detail 3", "Type", "Status", "Notes"];
+  const tableRows = [
+    `<Row>${headers.map((header) => `<Cell><Data ss:Type="String">${escapeHtml(header)}</Data></Cell>`).join("")}</Row>`,
+    ...rows.map((row) =>
+      `<Row>${headers
+        .map((header) => `<Cell><Data ss:Type="String">${escapeHtml(row[header] || "")}</Data></Cell>`)
+        .join("")}</Row>`
+    )
+  ].join("");
+  const workbookXml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:x="urn:schemas-microsoft-com:office:excel"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Worksheet ss:Name="Entries">
+    <Table>${tableRows}</Table>
+  </Worksheet>
+</Workbook>`;
+  const fileName = `customer-requirements-${new Date().toISOString().slice(0, 10)}.xls`;
+
+  if (Platform.OS === "web") {
+    downloadWebFile(workbookXml, fileName, excelXmlMimeType);
+    return { uri: fileName, mimeType: excelXmlMimeType, UTI: excelXmlUti, fallback: true };
+  }
+
+  if (!FileSystem.documentDirectory) {
+    throw new Error("Phone storage is not available for export.");
+  }
+
+  const uri = `${FileSystem.documentDirectory}${fileName}`;
+  await FileSystem.writeAsStringAsync(uri, workbookXml, {
+    encoding: FileSystem.EncodingType.UTF8
+  });
+
+  const info = await FileSystem.getInfoAsync(uri);
+  if (!info.exists) {
+    throw new Error("The Excel file could not be saved on this phone.");
+  }
+
+  return { uri, mimeType: excelXmlMimeType, UTI: excelXmlUti, fallback: true };
+}
+
 export async function createExcelFile(entries) {
   const { workbook } = createWorkbook(entries);
 
@@ -100,7 +161,7 @@ export async function createExcelFile(entries) {
       downloadWebFile(arrayBuffer, fileName, excelMimeType);
       return { uri: fileName, mimeType: excelMimeType, UTI: excelUti, fallback: false };
     } catch {
-      return writeCsvFile(entries);
+      return writeExcelXmlFile(entries);
     }
   }
 
@@ -123,7 +184,7 @@ export async function createExcelFile(entries) {
 
     return { uri, mimeType: excelMimeType, UTI: excelUti, fallback: false };
   } catch {
-    return writeCsvFile(entries);
+    return writeExcelXmlFile(entries);
   }
 }
 
@@ -182,14 +243,13 @@ function buildPdfHtml(entries, profile, stats) {
         <tr>
           <td class="center">${escapeHtml(entry.slno)}</td>
           <td>${escapeHtml(entry.date || "-")}</td>
-          <td>${escapeHtml(entry.estimateDeliveryDate || "-")}</td>
           <td class="strong">${escapeHtml(entry.name || "-")}</td>
           <td>${escapeHtml(entry.phone || "-")}</td>
-          <td>${escapeHtml(entry.type || "-")}</td>
-          <td><span class="status">${escapeHtml(entry.status || "-")}</span></td>
           <td>${escapeHtml(entry.detail1 || "-")}</td>
           <td>${escapeHtml(entry.detail2 || "-")}</td>
           <td>${escapeHtml(entry.detail3 || "-")}</td>
+          <td>${escapeHtml(entry.type || "-")}</td>
+          <td>${escapeHtml(entry.status || "-")}</td>
           <td>${escapeHtml(entry.notes || "-")}</td>
         </tr>
       `
@@ -207,6 +267,23 @@ function buildPdfHtml(entries, profile, stats) {
       `
     )
     .join("");
+  const typeCounts = entries.reduce((result, entry) => {
+    const type = entry.type || "No type";
+    result[type] = (result[type] || 0) + 1;
+    return result;
+  }, {});
+  const typeRows = Object.entries(typeCounts)
+    .map(
+      ([type, count]) => `
+        <tr>
+          <td>${escapeHtml(type)}</td>
+          <td class="right">${count}</td>
+          <td class="right">${entries.length ? Math.round((count / entries.length) * 100) : 0}%</td>
+        </tr>
+      `
+    )
+    .join("");
+  const emptyBreakdownRow = `<tr><td>-</td><td class="right">0</td><td class="right">0%</td></tr>`;
 
   return `
     <!doctype html>
@@ -255,6 +332,13 @@ function buildPdfHtml(entries, profile, stats) {
             grid-template-columns: 1.1fr 0.9fr;
             gap: 16px;
             margin-bottom: 18px;
+          }
+          .breakdown-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+            margin-bottom: 16px;
           }
           .section {
             border: 1px solid #e5e7eb;
@@ -326,15 +410,6 @@ function buildPdfHtml(entries, profile, stats) {
           .center { text-align: center; }
           .right { text-align: right; }
           .strong { font-weight: 700; color: #111827; }
-          .status {
-            display: inline-block;
-            border-radius: 999px;
-            background: #eef2ff;
-            color: #3730a3;
-            padding: 3px 7px;
-            font-weight: 700;
-            font-size: 9px;
-          }
           .footer {
             margin-top: 16px;
             padding-top: 10px;
@@ -362,46 +437,40 @@ function buildPdfHtml(entries, profile, stats) {
               <tr><td>Place</td><td>${escapeHtml(profile?.place || "-")}</td></tr>
             </table>
           </div>
+        </div>
 
+        <div class="breakdown-grid">
           <div class="section">
-            <h2>Report Summary</h2>
-            <div class="stats">
-              <div class="stat"><strong>${stats.total}</strong><span>Total</span></div>
-              <div class="stat"><strong>${stats.running}</strong><span>Running</span></div>
-              <div class="stat"><strong>${stats.completed}</strong><span>Completed</span></div>
-              <div class="stat"><strong>${stats.onHold}</strong><span>On Hold</span></div>
-            </div>
-            <table class="details" style="margin-top: 10px;">
-              <tr><td>Newly Added</td><td class="right">${stats.newlyAdded}</td></tr>
-              <tr><td>Cancelled</td><td class="right">${stats.cancelled}</td></tr>
+            <h2>Status Breakdown</h2>
+            <table class="details">
+              <tr><td><strong>Status</strong></td><td class="right"><strong>Count</strong></td><td class="right"><strong>Percent</strong></td></tr>
+              ${statusRows || emptyBreakdownRow}
+            </table>
+          </div>
+          <div class="section">
+            <h2>Type Breakdown</h2>
+            <table class="details">
+              <tr><td><strong>Type</strong></td><td class="right"><strong>Count</strong></td><td class="right"><strong>Percent</strong></td></tr>
+              ${typeRows || emptyBreakdownRow}
             </table>
           </div>
         </div>
 
         <div class="section">
-          <h2>Status Breakdown</h2>
-          <table class="details">
-            <tr><td><strong>Status</strong></td><td class="right"><strong>Count</strong></td><td class="right"><strong>Percent</strong></td></tr>
-            ${statusRows}
-          </table>
-        </div>
-
-        <div class="section" style="margin-top: 16px;">
           <h2>Customer Entries</h2>
           <table class="entries">
           <thead>
             <tr>
               <th style="width: 4%;">SL</th>
-              <th style="width: 8%;">Date</th>
-              <th style="width: 9%;">Delivery</th>
-              <th style="width: 12%;">Name</th>
-              <th style="width: 9%;">Phone</th>
-              <th style="width: 8%;">Type</th>
-              <th style="width: 10%;">Status</th>
+              <th style="width: 9%;">Date</th>
+              <th style="width: 13%;">Name</th>
+              <th style="width: 10%;">Phone</th>
               <th style="width: 10%;">Detail 1</th>
               <th style="width: 10%;">Detail 2</th>
               <th style="width: 10%;">Detail 3</th>
-              <th style="width: 9%;">Notes</th>
+              <th style="width: 10%;">Type</th>
+              <th style="width: 11%;">Status</th>
+              <th style="width: 13%;">Notes</th>
             </tr>
           </thead>
           <tbody>${rows || `<tr><td colspan="11">No entries found.</td></tr>`}</tbody>

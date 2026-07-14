@@ -1,4 +1,4 @@
-import { emptyForm, statuses } from "../constants/appConstants";
+import { emptyForm } from "../constants/appConstants";
 
 export const today = () => new Date().toISOString().slice(0, 10);
 
@@ -13,7 +13,6 @@ export const getNextSlno = (entries) => {
 export const makeForm = (entry) => ({
   ...emptyForm,
   date: entry?.date || today(),
-  estimateDeliveryDate: entry?.estimateDeliveryDate || "",
   slno: entry?.slno || "",
   name: entry?.name || "",
   phone: entry?.phone || "",
@@ -22,15 +21,16 @@ export const makeForm = (entry) => ({
   detail3: entry?.detail3 || "",
   type: entry?.type || "",
   notes: entry?.notes || "",
-  status: entry?.status || statuses[0]
+  status: entry?.status || ""
 });
 
 export const filterAndSortEntries = (entries, filter, sortBy, sortDir) => {
   const filtered = entries.filter((entry) => {
     const matchesDate = filter.date ? entry.date.includes(filter.date) : true;
+    const matchesCustomer = filter.customer ? entry.name === filter.customer : true;
     const matchesType = filter.type ? entry.type === filter.type : true;
     const matchesStatus = filter.status ? entry.status === filter.status : true;
-    return matchesDate && matchesType && matchesStatus;
+    return matchesDate && matchesCustomer && matchesType && matchesStatus;
   });
 
   return filtered.sort((a, b) => {
@@ -44,9 +44,8 @@ export const filterAndSortEntries = (entries, filter, sortBy, sortDir) => {
 
 export const toExcelRows = (entries) =>
   entries.map((entry) => ({
-    Date: entry.date,
-    "Estimated Delivery Date": entry.estimateDeliveryDate,
     "SL No": entry.slno,
+    Date: entry.date,
     Name: entry.name,
     Phone: entry.phone,
     "Detail 1": entry.detail1,

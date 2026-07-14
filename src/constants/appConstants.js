@@ -1,5 +1,7 @@
 export const STORAGE_KEYS = {
   entries: "customer_requirement_entries_v1",
+  customers: "customer_requirement_customers_v1",
+  customStatuses: "customer_requirement_custom_statuses_v1",
   types: "customer_requirement_types_v1",
   profile: "customer_requirement_profile_v1",
   loggedIn: "customer_requirement_logged_in_v1",
@@ -54,31 +56,9 @@ export const themes = {
   }
 };
 
-export const statuses = [
-  "Newly Added",
-  "Currently Running",
-  "Completed",
-  "On Hold",
-  "Cancelled"
-];
 
-export const statusStyles = {
-  "Newly Added": "border-[#d6ecff] bg-[#f2f8ff]",
-  "Currently Running": "border-[#ffe1a6] bg-[#fff8e8]",
-  Completed: "border-[#bdebdc] bg-[#effbf6]",
-  "On Hold": "border-[#d8d4ff] bg-[#f4f2ff]",
-  Cancelled: "border-[#ffc8cf] bg-[#fff1f3]"
-};
 
-export const statusDots = {
-  "Newly Added": "bg-[#57a7ff]",
-  "Currently Running": "bg-[#f3a712]",
-  Completed: "bg-[#24a77e]",
-  "On Hold": "bg-[#7467d6]",
-  Cancelled: "bg-[#e54960]"
-};
-
-export const defaultTypes = ["General", "Urgent", "Service", "Sales", "Follow Up"];
+export const defaultTypes = [];
 
 export const defaultProfile = {
   businessName: "My Business",
@@ -91,7 +71,6 @@ export const defaultProfile = {
 
 export const emptyForm = {
   date: "",
-  estimateDeliveryDate: "",
   slno: "",
   name: "",
   phone: "",
@@ -100,5 +79,20 @@ export const emptyForm = {
   detail3: "",
   type: "",
   notes: "",
-  status: statuses[0]
+  status: ""
+};
+
+export const emptyCustomerForm = {
+  name: "",
+  details: "",
+  location: "",
+  phone: ""
+};
+
+export const emptyStatusForm = {
+  name: ""
+};
+
+export const emptyTypeForm = {
+  name: ""
 };

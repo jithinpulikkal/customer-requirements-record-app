@@ -7,11 +7,11 @@ export default function BottomBar({ bottomInset = 0, controller }) {
     <View style={[tw`absolute left-5 right-5`, { bottom: Math.max(bottomInset, 12) }]}>
       <View style={tw`h-18 px-3 flex-row items-center justify-between ${controller.theme.bottom} rounded-full shadow-lg`}>
         <TabButton
-          active={controller.screen === "status"}
+          active={controller.screen === "dashboard"}
           controller={controller}
           icon={ChartPie}
           label="Dashboard"
-          onPress={() => controller.setScreen("status")}
+          onPress={() => controller.setScreen("dashboard")}
         />
         <TabButton
           active={controller.screen === "list"}
