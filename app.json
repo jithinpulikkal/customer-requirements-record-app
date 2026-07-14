@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Customer Requirements",
+    "slug": "customer-requirements",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/icon/icon.jpg",
+    "userInterfaceStyle": "light",
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/icon/icon.jpg",
+        "backgroundColor": "#eef0f4"
+      },
+      "package": "com.rvjn.customerrequirements"
+    },
+    "ios": {
+      "icon": "./src/icon/icon.jpg"
+    },
+    "web": {
+      "favicon": "./src/icon/icon.png"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}

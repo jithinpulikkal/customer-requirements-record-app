@@ -1,0 +1,10 @@
+npm notice run customer-requirements-app@1.0.0 npx
+npm notice run expo start --localhost --port 8082 --clear
+
+React Native / Expo is supported as a PRO feature of [33mConsole Ninja[39m [36mhttps://console-ninja.com/pro[39m.
+
+Starting project at J:\SS\app
+Starting Metro Bundler
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Waiting on http://localhost:8082
+Logs for your project will appear below.
