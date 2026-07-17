@@ -1,7 +1,8 @@
-import { Alert, BackHandler, StatusBar, View } from "react-native";
+import { BackHandler, StatusBar, View } from "react-native";
 import { useEffect } from "react";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import tw from "twrnc";
+import AppDialog from "./src/components/AppDialog";
 import BottomBar from "./src/components/BottomBar";
 import { useCustomerController } from "./src/controllers/useCustomerController";
 import CustomerFormView from "./src/views/CustomerFormView";
@@ -34,8 +35,8 @@ function AppShell() {
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       if (controller.screen === "dashboard") {
-        Alert.alert("Exit app", "Do you want to close the app?", [
-          { text: "Cancel", style: "cancel" },
+        controller.showDialog("Exit app", "Do you want to close the app?", "confirm", [
+          { text: "Cancel" },
           { text: "Exit", style: "destructive", onPress: () => BackHandler.exitApp() }
         ]);
         return true;
@@ -52,8 +53,8 @@ function AppShell() {
       }
 
       if (controller.screen === "start") {
-        Alert.alert("Exit app", "Do you want to close the app?", [
-          { text: "Cancel", style: "cancel" },
+        controller.showDialog("Exit app", "Do you want to close the app?", "confirm", [
+          { text: "Cancel" },
           { text: "Exit", style: "destructive", onPress: () => BackHandler.exitApp() }
         ]);
         return true;
@@ -89,6 +90,11 @@ function AppShell() {
         {controller.screen === "settings" && <SettingsView controller={controller} />}
         {mainScreens.includes(controller.screen) ? <BottomBar controller={controller} bottomInset={insets.bottom} /> : null}
       </View>
+      <AppDialog
+        dialog={controller.dialog}
+        onClose={controller.closeDialog}
+        theme={controller.theme}
+      />
     </View>
   );
 }

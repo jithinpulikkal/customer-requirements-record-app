@@ -12,7 +12,7 @@ const slides = [
   {
     icon: BarChart3,
     title: "Business Dashboard",
-    text: "See total, running, completed, on-hold, and cancelled work visually."
+    text: "See entries, customers, statuses, and types visually."
   },
   {
     icon: FileSpreadsheet,

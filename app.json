@@ -17,7 +17,7 @@
       "icon": "./src/icon/icon.jpg"
     },
     "web": {
-      "favicon": "./src/icon/icon.png"
+      "favicon": "./src/icon/icon.jpg"
     },
     "assetBundlePatterns": [
       "**/*"

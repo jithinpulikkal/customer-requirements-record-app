@@ -1,8 +1,8 @@
 import { ClipboardList, Save, X } from "lucide-react-native";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import tw from "twrnc";
+import AutocompleteField from "../components/AutocompleteField";
 import DatePickerField from "../components/DatePickerField";
-import DropdownField from "../components/DropdownField";
 import Header from "../components/Header";
 
 export default function FormView({ controller }) {
@@ -10,6 +10,7 @@ export default function FormView({ controller }) {
     const readOnlyStyle = tw`px-4 min-h-13 text-base border rounded-2xl ${controller.theme.input} ${controller.theme.inputMuted}`;
     const inputStyle = tw`px-4 min-h-13 text-base border rounded-2xl ${controller.theme.input}`;
     const iconBg = controller.themeMode === "dark" ? "bg-[#303030]" : "bg-[#fff2ef]";
+    const entryLabel = `Entry ${controller.form.slno || controller.entries.length + 1}`;
 
     return (
         <View style={tw`flex-1 ${controller.theme.page}`}>
@@ -24,8 +25,11 @@ export default function FormView({ controller }) {
                         <View style={tw`w-18 h-18 items-center justify-center rounded-3xl ${iconBg}`}>
                             <ClipboardList size={34} color={controller.theme.accentColor} />
                         </View>
-                        <Text style={tw`mt-4 text-2xl font-black ${controller.theme.text}`}>
-                            {controller.editing ? "Edit Entry" : "New Entry"}
+                        <Text style={tw`mt-3 text-xl font-black uppercase tracking-wide ${controller.theme.accentText}`}>
+                            {entryLabel}
+                        </Text>
+                        <Text style={tw`m-4 text-md font-black ${controller.theme.text}`}>
+                            {controller.editing ? "Edit Entry" : ""}
                         </Text>
                         <Text style={tw`mt-1 text-center text-sm ${controller.theme.muted}`}>
                             Save customer details, requirements, and notes.
@@ -34,9 +38,9 @@ export default function FormView({ controller }) {
 
                     <View style={tw`p-4 ${controller.theme.card} rounded-3xl border ${controller.theme.border}`}>
                         <View style={tw`gap-3`}>
-                            <ThemedField controller={controller} label="SL No">
+                            {/* <ThemedField controller={controller} label="SL No">
                                 <TextInput value={controller.form.slno} editable={false} style={readOnlyStyle} />
-                            </ThemedField>
+                            </ThemedField> */}
                             <ThemedField controller={controller} label="Date">
                                 
                                  <DatePickerField
@@ -47,12 +51,12 @@ export default function FormView({ controller }) {
                                 />
                             </ThemedField>
                             <ThemedField controller={controller} label="Customer">
-                                <DropdownField
-                                    placeholder="Select customer"
-                                    value={controller.customers.some((customer) => customer.name === controller.form.name) ? controller.form.name : ""}
+                                <AutocompleteField
+                                    placeholder="Type or select customer"
+                                    value={controller.form.name}
                                     options={controller.customers.map((customer) => customer.name)}
-                                    onChange={controller.applyCustomerToEntry}
-                                    allowEmpty
+                                    onChange={(value) => controller.setField("name", value)}
+                                    onSelect={controller.applyCustomerToEntry}
                                     variant={controller.themeMode}
                                 />
                             </ThemedField>
@@ -71,7 +75,7 @@ export default function FormView({ controller }) {
                                 <TextInput
                                     value={controller.form.detail1}
                                     onChangeText={(value) => controller.setField("detail1", value)}
-                                    placeholder="Requirement detail"
+                                    placeholder="Detail"
                                     placeholderTextColor={placeholderColor}
                                     style={inputStyle}
                                 />
@@ -80,7 +84,7 @@ export default function FormView({ controller }) {
                                 <TextInput
                                     value={controller.form.detail2}
                                     onChangeText={(value) => controller.setField("detail2", value)}
-                                    placeholder="Requirement detail"
+                                    placeholder="Detail"
                                     placeholderTextColor={placeholderColor}
                                     style={inputStyle}
                                 />
@@ -89,28 +93,26 @@ export default function FormView({ controller }) {
                                 <TextInput
                                     value={controller.form.detail3}
                                     onChangeText={(value) => controller.setField("detail3", value)}
-                                    placeholder="Requirement detail"
+                                    placeholder="Detail"
                                     placeholderTextColor={placeholderColor}
                                     style={inputStyle}
                                 />
                             </ThemedField>
                             <ThemedField controller={controller} label="Type">
-                                <DropdownField
-                                    placeholder="Select type"
+                                <AutocompleteField
+                                    placeholder="Type or select type"
                                     value={controller.form.type}
                                     options={controller.types}
                                     onChange={(value) => controller.setField("type", value)}
-                                    allowEmpty
                                     variant={controller.themeMode}
                                 />
                             </ThemedField>
                             <ThemedField controller={controller} label="Status">
-                                <DropdownField
-                                    placeholder="Select status"
+                                <AutocompleteField
+                                    placeholder="Type or select status"
                                     value={controller.form.status}
                                     options={controller.statusOptions}
                                     onChange={(value) => controller.setField("status", value)}
-                                    allowEmpty
                                     variant={controller.themeMode}
                                 />
                             </ThemedField>

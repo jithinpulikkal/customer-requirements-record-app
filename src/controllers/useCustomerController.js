@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Platform } from "react-native";
+import { Platform } from "react-native";
 import { defaultProfile, emptyCustomerForm, emptyStatusForm, emptyTypeForm, themes } from "../constants/appConstants";
 import { filterAndSortEntries, getNextSlno, makeForm, today } from "../models/customerModel";
 import {
@@ -45,6 +45,7 @@ export function useCustomerController() {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [themeMode, setThemeModeState] = useState("light");
   const [loggedIn, setLoggedIn] = useState(false);
+  const [dialog, setDialog] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -59,7 +60,7 @@ export function useCustomerController() {
         setLoggedIn(data.loggedIn);
         setScreen(data.loggedIn ? "dashboard" : "start");
       } catch {
-        Alert.alert("Storage error", "Saved data could not be loaded.");
+        showDialog("Storage error", "Saved data could not be loaded.", "error");
       }
     }
     load();
@@ -120,19 +121,9 @@ export function useCustomerController() {
         result[status] = entries.filter((entry) => entry.status === status).length;
         return result;
       }, {});
-      const countByText = (patterns) =>
-        entries.filter((entry) => {
-          const value = `${entry.status || ""}`.toLowerCase();
-          return patterns.some((pattern) => value.includes(pattern));
-        }).length;
 
       return {
         total: entries.length,
-        running: countByText(["running", "active", "progress"]),
-        completed: countByText(["completed", "complete", "done", "finished"]),
-        onHold: countByText(["hold", "pending", "pause"]),
-        newlyAdded: countByText(["new"]),
-        cancelled: countByText(["cancel", "reject"]),
         byStatus
       };
     },
@@ -195,6 +186,14 @@ export function useCustomerController() {
 
   function changeListMode(mode) {
     setListMode(normalizeListMode(mode));
+  }
+
+  function showDialog(title, message, variant = "info", actions = null) {
+    setDialog({ title, message, variant, actions });
+  }
+
+  function closeDialog() {
+    setDialog(null);
   }
 
   function setField(field, value) {
@@ -346,30 +345,90 @@ export function useCustomerController() {
     }));
   }
 
+  function hasTextMatch(items, text, getValue = (item) => item) {
+    const normalizedText = `${text || ""}`.trim().toLowerCase();
+    return items.some((item) => `${getValue(item) || ""}`.trim().toLowerCase() === normalizedText);
+  }
+
+  function findCustomerByPhone(phone, ignoreId = null) {
+    const normalizedPhone = `${phone || ""}`.trim();
+    if (!normalizedPhone) {
+      return null;
+    }
+
+    return customers.find(
+      (customer) => customer.id !== ignoreId && `${customer.phone || ""}`.trim() === normalizedPhone
+    );
+  }
+
   function saveEntry() {
-    if (!form.name.trim()) {
-      Alert.alert("Missing details", "Name is required.");
+    const finalName = form.name.trim();
+    const finalPhone = form.phone.trim();
+    const finalType = form.type.trim();
+    const finalStatus = form.status.trim();
+
+    if (!finalName) {
+      showDialog("Missing details", "Name is required.", "warning");
       return;
     }
 
-    const finalType = newType.trim() || form.type.trim();
     if (!finalType) {
-      Alert.alert("Missing type", "Select a type or enter a new one.");
+      showDialog("Missing type", "Select a type or enter a new one.", "warning");
       return;
     }
 
-    if (!form.status.trim()) {
-      Alert.alert("Missing status", "Create or select a status before saving this entry.");
+    if (!finalStatus) {
+      showDialog("Missing status", "Create or select a status before saving this entry.", "warning");
       return;
     }
 
-    if (!types.includes(finalType)) {
+    const existingCustomerByPhone = findCustomerByPhone(finalPhone);
+    if (existingCustomerByPhone && existingCustomerByPhone.name !== finalName) {
+      showDialog(
+        "Duplicate customer",
+        `This phone number is already saved for ${existingCustomerByPhone.name}. Select that customer or use another phone number.`,
+        "warning"
+      );
+      return;
+    }
+
+    if (!existingCustomerByPhone && !hasTextMatch(customers, finalName, (customer) => customer.name)) {
+      setCustomers((current) => [
+        {
+          id: `${Date.now()}-customer`,
+          name: finalName,
+          details: "",
+          location: "",
+          phone: finalPhone,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        ...current
+      ]);
+    }
+
+    if (!hasTextMatch(types, finalType)) {
       setTypes((current) => [finalType, ...current]);
+    }
+
+    if (!hasTextMatch(customStatuses, finalStatus, (status) => status.name)) {
+      setCustomStatuses((current) => [
+        {
+          id: `${Date.now()}-status`,
+          name: finalStatus,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        ...current
+      ]);
     }
 
     const payload = {
       ...form,
+      name: finalName,
+      phone: finalPhone,
       type: finalType,
+      status: finalStatus,
       updatedAt: new Date().toISOString()
     };
 
@@ -380,6 +439,7 @@ export function useCustomerController() {
       setSelectedId(editingId);
       resetEntryForm();
       replaceScreen("detail");
+      showDialog("Entry updated", "The entry has been saved successfully.", "success");
       return;
     }
 
@@ -396,17 +456,32 @@ export function useCustomerController() {
     setSelectedId(id);
     resetEntryForm();
     replaceScreen("detail");
+    showDialog("Entry saved", "The entry has been saved successfully.", "success");
   }
 
   function saveCustomer() {
-    if (!customerForm.name.trim()) {
-      Alert.alert("Missing details", "Customer name is required.");
+    const name = customerForm.name.trim();
+    const phone = customerForm.phone.trim();
+
+    if (!name) {
+      showDialog("Missing details", "Customer name is required.", "warning");
+      return;
+    }
+
+    const duplicateCustomer = findCustomerByPhone(phone, editingCustomerId);
+    if (duplicateCustomer) {
+      showDialog(
+        "Duplicate customer",
+        `This phone number is already saved for ${duplicateCustomer.name}. Use a different phone number.`,
+        "warning"
+      );
       return;
     }
 
     const payload = {
       ...customerForm,
-      name: customerForm.name.trim(),
+      name,
+      phone,
       updatedAt: new Date().toISOString()
     };
 
@@ -430,17 +505,22 @@ export function useCustomerController() {
     resetCustomerForm();
     changeListMode("customers");
     replaceScreen("list");
+    showDialog(
+      editingCustomerId ? "Customer updated" : "Customer saved",
+      "The customer details have been saved successfully.",
+      "success"
+    );
   }
 
   function saveCustomStatus() {
     const name = statusForm.name.trim();
     if (!name) {
-      Alert.alert("Missing details", "Status name is required.");
+      showDialog("Missing details", "Status name is required.", "warning");
       return;
     }
 
-    if (customStatuses.some((status) => status.name === name && status.id !== editingStatusId)) {
-      Alert.alert("Duplicate status", "This status name already exists.");
+    if (customStatuses.some((status) => status.id !== editingStatusId && `${status.name || ""}`.trim().toLowerCase() === name.toLowerCase())) {
+      showDialog("Duplicate status", "This status name already exists.", "warning");
       return;
     }
 
@@ -465,17 +545,22 @@ export function useCustomerController() {
     resetStatusForm();
     changeListMode("statuses");
     replaceScreen("list");
+    showDialog(
+      editingStatusId ? "Status updated" : "Status saved",
+      "The status option has been saved successfully.",
+      "success"
+    );
   }
 
   function saveType() {
     const name = typeForm.name.trim();
     if (!name) {
-      Alert.alert("Missing details", "Type name is required.");
+      showDialog("Missing details", "Type name is required.", "warning");
       return;
     }
 
-    if (types.some((type) => type === name && type !== editingTypeName)) {
-      Alert.alert("Duplicate type", "This type name already exists.");
+    if (types.some((type) => type !== editingTypeName && `${type || ""}`.trim().toLowerCase() === name.toLowerCase())) {
+      showDialog("Duplicate type", "This type name already exists.", "warning");
       return;
     }
 
@@ -488,24 +573,22 @@ export function useCustomerController() {
     resetTypeForm();
     changeListMode("types");
     replaceScreen("list");
+    showDialog(
+      editingTypeName ? "Type updated" : "Type saved",
+      "The type option has been saved successfully.",
+      "success"
+    );
   }
 
   function confirmDelete(title, message, onConfirm) {
-    if (Platform.OS === "web" && typeof window !== "undefined") {
-      if (window.confirm(`${title}\n\n${message}`)) {
-        onConfirm();
-      }
-      return;
-    }
-
-    Alert.alert(title, message, [
-      { text: "Cancel", style: "cancel" },
+    showDialog(title, message, "danger", [
+      { text: "Cancel" },
       { text: "Delete", style: "destructive", onPress: onConfirm }
     ]);
   }
 
   function deleteEntry(id) {
-    confirmDelete("Delete entry", "This customer entry will be removed from this phone.", () => {
+    confirmDelete("Delete entry ?", "This customer entry will be removed permanently.", () => {
       setEntries((current) => current.filter((entry) => entry.id !== id));
       setSelectedId(null);
       changeListMode("entries");
@@ -514,7 +597,7 @@ export function useCustomerController() {
   }
 
   function deleteCustomer(id) {
-    confirmDelete("Delete customer", "This saved customer will be removed from this phone.", () => {
+    confirmDelete("Delete customer ?", "This saved customer will be removed permanently.", () => {
       const deletedCustomer = customers.find((item) => item.id === id);
       setCustomers((current) => current.filter((item) => item.id !== id));
       if (deletedCustomer?.name) {
@@ -529,7 +612,7 @@ export function useCustomerController() {
   }
 
   function deleteCustomStatus(id) {
-    confirmDelete("Delete status", "This status option will be removed from this phone.", () => {
+    confirmDelete("Delete status ?", "This status option will be removed permanently.", () => {
       const deletedStatus = customStatuses.find((item) => item.id === id);
       setCustomStatuses((current) => current.filter((item) => item.id !== id));
       if (deletedStatus?.name) {
@@ -550,7 +633,7 @@ export function useCustomerController() {
       return;
     }
 
-    confirmDelete("Delete type", "This type option will be removed from this phone.", () => {
+    confirmDelete("Delete type ?", "This type option will be removed permanently.", () => {
       setTypes((current) => current.filter((type) => `${type || ""}`.trim() !== normalizedName));
       setEntries((current) =>
         current.map((entry) =>
@@ -574,21 +657,22 @@ export function useCustomerController() {
 
   async function exportEntries() {
     if (!exportEntriesList.length) {
-      Alert.alert("No data", "No entries match the selected export conditions.");
+      showDialog("No data", "No entries match the selected export conditions.", "warning");
       return;
     }
 
     try {
       setExporting(true);
       const file = await shareExcelFile(exportEntriesList);
-      Alert.alert(
+      showDialog(
         "Export ready",
         `${file.fallback ? "Excel-compatible file" : "Excel file"} ${
           Platform.OS === "web" ? "downloaded" : "created"
-        }:\n${file.uri}`
+        }:\n${file.uri}`,
+        "success"
       );
     } catch (error) {
-      Alert.alert("Export failed", error?.message || "The Excel file could not be created.");
+      showDialog("Export failed", error?.message || "The Excel file could not be created.", "error");
     } finally {
       setExporting(false);
     }
@@ -596,21 +680,22 @@ export function useCustomerController() {
 
   async function uploadToGoogleDrive() {
     if (!exportEntriesList.length) {
-      Alert.alert("No data", "No entries match the selected export conditions.");
+      showDialog("No data", "No entries match the selected export conditions.", "warning");
       return;
     }
 
     try {
       setExporting(true);
       const file = await uploadExcelToGoogleDrive(exportEntriesList);
-      Alert.alert(
+      showDialog(
         "Upload ready",
         Platform.OS === "web"
           ? `${file.fallback ? "Excel-compatible file" : "Excel file"} downloaded:\n${file.uri}\nGoogle Drive opened in a new tab.`
-          : `Choose Google Drive from the share sheet to upload the ${file.fallback ? "Excel-compatible file" : "Excel file"}.`
+          : `Choose Google Drive from the share sheet to upload the ${file.fallback ? "Excel-compatible file" : "Excel file"}.`,
+        "success"
       );
     } catch (error) {
-      Alert.alert("Upload failed", error?.message || "The Excel file could not be shared.");
+      showDialog("Upload failed", error?.message || "The Excel file could not be shared.", "error");
     } finally {
       setExporting(false);
     }
@@ -618,19 +703,20 @@ export function useCustomerController() {
 
   async function exportPdfReport() {
     if (!exportEntriesList.length) {
-      Alert.alert("No data", "No entries match the selected export conditions.");
+      showDialog("No data", "No entries match the selected export conditions.", "warning");
       return;
     }
 
     try {
       setExportingPdf(true);
-      const uri = await sharePdfReport(exportEntriesList, profile, exportStats);
-      Alert.alert(
+      const uri = await sharePdfReport(exportEntriesList, profile, exportStats, exportFilter);
+      showDialog(
         "PDF ready",
-        Platform.OS === "web" ? "The report opened in a new print window." : `PDF report created:\n${uri}`
+        Platform.OS === "web" ? "The report opened in a new print window." : `PDF report created:\n${uri}`,
+        "success"
       );
     } catch {
-      Alert.alert("PDF export failed", "The PDF report could not be created.");
+      showDialog("PDF export failed", "The PDF report could not be created.", "error");
     } finally {
       setExportingPdf(false);
     }
@@ -647,6 +733,7 @@ export function useCustomerController() {
     customers,
     customStatuses,
     customerForm,
+    dialog,
     editing: Boolean(editingId),
     exporting,
     exportingPdf,
@@ -671,6 +758,7 @@ export function useCustomerController() {
     visibleEntries,
     statusOptions,
     applyCustomerToEntry,
+    closeDialog,
     deleteCustomer,
     deleteEntry,
     deleteCustomStatus,
@@ -692,6 +780,7 @@ export function useCustomerController() {
     saveCustomStatus,
     saveEntry,
     saveType,
+    showDialog,
     setCustomerField,
     setExportFilter,
     setField,

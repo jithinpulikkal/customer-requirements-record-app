@@ -236,7 +236,7 @@ const escapeHtml = (value) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 
-function buildPdfHtml(entries, profile, stats) {
+function buildPdfHtml(entries, profile, stats, filter = {}) {
   const rows = entries
     .map(
       (entry) => `
@@ -284,6 +284,10 @@ function buildPdfHtml(entries, profile, stats) {
     )
     .join("");
   const emptyBreakdownRow = `<tr><td>-</td><td class="right">0</td><td class="right">0%</td></tr>`;
+  const filterValue = (value, fallback = "All") => {
+    const normalized = `${value || ""}`.trim();
+    return normalized || fallback;
+  };
 
   return `
     <!doctype html>
@@ -437,6 +441,16 @@ function buildPdfHtml(entries, profile, stats) {
               <tr><td>Place</td><td>${escapeHtml(profile?.place || "-")}</td></tr>
             </table>
           </div>
+          <div class="section">
+            <h2>Export Conditions</h2>
+            <table class="details">
+              <tr><td>From Date</td><td>${escapeHtml(filterValue(filter.fromDate))}</td></tr>
+              <tr><td>To Date</td><td>${escapeHtml(filterValue(filter.toDate))}</td></tr>
+              <tr><td>Customer</td><td>${escapeHtml(filterValue(filter.customer))}</td></tr>
+              <tr><td>Status</td><td>${escapeHtml(filterValue(filter.status))}</td></tr>
+              <tr><td>Type</td><td>${escapeHtml(filterValue(filter.type))}</td></tr>
+            </table>
+          </div>
         </div>
 
         <div class="breakdown-grid">
@@ -485,8 +499,8 @@ function buildPdfHtml(entries, profile, stats) {
   `;
 }
 
-export async function sharePdfReport(entries, profile, stats) {
-  const html = buildPdfHtml(entries, profile, stats);
+export async function sharePdfReport(entries, profile, stats, filter) {
+  const html = buildPdfHtml(entries, profile, stats, filter);
 
   if (Platform.OS === "web") {
     const reportWindow = window.open("", "_blank");

@@ -1,4 +1,4 @@
-import { Save, X } from "lucide-react-native";
+import { Save, UserRound, X } from "lucide-react-native";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import tw from "twrnc";
 import Header from "../components/Header";
@@ -6,12 +6,32 @@ import Header from "../components/Header";
 export default function CustomerFormView({ controller }) {
     const placeholderColor = controller.themeMode === "dark" ? "#777d90" : "#8d96a3";
     const inputStyle = tw`px-4 min-h-13 text-base border rounded-2xl ${controller.theme.input}`;
+    const iconBg = controller.themeMode === "dark" ? "bg-[#303030]" : "bg-[#fff2ef]";
+    const customerIndex = controller.customers.findIndex(
+        (customer) => customer.name === controller.customerForm.name || customer.phone === controller.customerForm.phone
+    );
+    const customerLabel = `Customer ${customerIndex >= 0 ? customerIndex + 1 : controller.customers.length + 1}`;
 
     return (
         <View style={tw`flex-1 ${controller.theme.page}`}>
             <Header controller={controller} title="Customer Entry" showBack />
             <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={tw`flex-1`}>
-                <ScrollView contentContainerStyle={tw`px-5`}>
+                <ScrollView contentContainerStyle={tw`px-5 pb-24`}>
+                    <View style={tw`items-center pt-3 pb-5`}>
+                        <View style={tw`w-18 h-18 items-center justify-center rounded-3xl ${iconBg}`}>
+                            <UserRound size={34} color={controller.theme.accentColor} />
+                        </View>
+                        <Text style={tw`mt-3 text-md font-black uppercase tracking-wide ${controller.theme.accentText}`}>
+                            {customerLabel}
+                        </Text>
+                        <Text style={tw`m-4 text-2xl font-black ${controller.theme.text}`}>
+                            {controller.customerForm.name ? controller.customerForm.name : ""}
+                        </Text>
+                        <Text style={tw`mt-1 text-center text-sm ${controller.theme.muted}`}>
+                            Save customer contact details for future entries.
+                        </Text>
+                    </View>
+
                     <View style={tw`p-4 ${controller.theme.card} border ${controller.theme.border} rounded-3xl`}>
                         <CustomerField controller={controller} label="Name">
                             <TextInput

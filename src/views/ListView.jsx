@@ -7,6 +7,7 @@ import {
     ListPlus,
     MapPin,
     Phone,
+    Plus,
     Search,
     SlidersHorizontal,
     Trash2,
@@ -59,25 +60,21 @@ export default function ListView({ controller }) {
                         <View
                             style={tw`p-5 mb-4 ${controller.theme.card} rounded-[32px] shadow-sm border ${controller.theme.border}`}
                         >
-                            <View style={tw`flex-row items-start justify-between`}>
-                                <View style={tw`flex-1 pr-4`}>
-                                    <Text
-                                        style={tw`text-xs font-black uppercase tracking-wide ${controller.theme.accentText}`}
-                                    >
-                                        Work queue
-                                    </Text>
-                                    <Text style={tw`mt-1 text-4xl font-black ${controller.theme.text}`}>
+                            <View style={tw`flex-row items-center`}>
+                                <View
+                                    style={tw`w-14 h-14 items-center justify-center rounded-2xl ${controller.theme.cardAlt}`}
+                                >
+                                    <ClipboardList size={24} color={controller.theme.accentColor} />
+                                </View>
+                                <View style={tw`ml-4 flex-1`}>
+                                    <Text style={tw`text-3xl font-black ${controller.theme.text}`}>
                                         {controller.visibleEntries.length}
                                     </Text>
-                                    <Text style={tw`mt-1 text-sm font-bold ${controller.theme.muted}`}>
-                                        visible customer entries
+                                    <Text style={tw`text-sm font-bold ${controller.theme.muted}`}>
+                                        Entry List
                                     </Text>
                                 </View>
-                                <View
-                                    style={tw`w-16 h-16 items-center justify-center rounded-3xl ${controller.theme.cardAlt}`}
-                                >
-                                    <ClipboardList size={28} color={controller.theme.accentColor} />
-                                </View>
+                                <AddListButton controller={controller} onPress={controller.openEntryCreate} />
                             </View>
                         </View>
 
@@ -91,11 +88,19 @@ export default function ListView({ controller }) {
                                 />
                                 <Text style={tw`ml-2 flex-1 font-black ${controller.theme.text}`}>Filter and sort</Text>
                                 {activeFilters ? (
-                                    <View style={tw`mr-3 px-3 py-1 rounded-full ${controller.theme.accentBg}`}>
-                                        <Text style={tw`text-xs font-black ${controller.theme.accentText}`}>
-                                            {activeFilters}
-                                        </Text>
-                                    </View>
+                                    <>
+                                        <View style={tw`mr-2 px-3 py-1 rounded-full ${controller.theme.accentBg}`}>
+                                            <Text style={tw`text-xs font-black ${controller.theme.accentText}`}>
+                                                {activeFilters}
+                                            </Text>
+                                        </View>
+                                        <Pressable
+                                            onPress={() => controller.setFilter({ date: "", customer: "", type: "", status: "" })}
+                                            style={tw`mr-3 px-3 py-1.5 rounded-full ${controller.theme.cardAlt}`}
+                                        >
+                                            <Text style={tw`text-[10px] font-black ${controller.theme.muted}`}>Clear</Text>
+                                        </Pressable>
+                                    </>
                                 ) : null}
                                 {filtersOpen ? (
                                     <ChevronUp size={20} color={controller.themeMode === "dark" ? "#f4f1ea" : "#20252d"} />
@@ -249,6 +254,11 @@ function SimpleList({ controller }) {
     const emptyText = isCustomers ? "No customers saved." : isStatuses ? "No custom statuses saved." : "No types saved.";
     const title = isCustomers ? "Customer List" : isStatuses ? "Status List" : "Type List";
     const Icon = isCustomers ? UserRound : ListPlus;
+    const addAction = isCustomers
+        ? controller.openCustomerCreate
+        : isStatuses
+            ? controller.openStatusCreate
+            : controller.openTypeCreate;
     const activeCustomerFilters = [customerFilter.name, customerFilter.location].filter(Boolean).length;
 
     return (
@@ -262,6 +272,7 @@ function SimpleList({ controller }) {
                         <Text style={tw`text-3xl font-black ${controller.theme.text}`}>{items.length}</Text>
                         <Text style={tw`text-sm font-bold ${controller.theme.muted}`}>{title}</Text>
                     </View>
+                    <AddListButton controller={controller} onPress={addAction} />
                 </View>
             </View>
 
@@ -274,11 +285,19 @@ function SimpleList({ controller }) {
                         />
                         <Text style={tw`ml-2 flex-1 font-black ${controller.theme.text}`}>Filter and sort</Text>
                         {activeCustomerFilters ? (
-                            <View style={tw`mr-3 px-3 py-1 rounded-full ${controller.theme.accentBg}`}>
-                                <Text style={tw`text-xs font-black ${controller.theme.accentText}`}>
-                                    {activeCustomerFilters}
-                                </Text>
-                            </View>
+                            <>
+                                <View style={tw`mr-2 px-3 py-1 rounded-full ${controller.theme.accentBg}`}>
+                                    <Text style={tw`text-xs font-black ${controller.theme.accentText}`}>
+                                        {activeCustomerFilters}
+                                    </Text>
+                                </View>
+                                <Pressable
+                                    onPress={() => setCustomerFilter({ name: "", location: "" })}
+                                    style={tw`mr-3 px-3 py-1.5 rounded-full ${controller.theme.cardAlt}`}
+                                >
+                                    <Text style={tw`text-[10px] font-black ${controller.theme.muted}`}>Clear</Text>
+                                </Pressable>
+                            </>
                         ) : null}
                         {customerFiltersOpen ? (
                             <ChevronUp size={20} color={controller.themeMode === "dark" ? "#f4f1ea" : "#20252d"} />
@@ -364,6 +383,17 @@ function SimpleList({ controller }) {
                 )
             )}
         </>
+    );
+}
+
+function AddListButton({ controller, onPress }) {
+    return (
+        <Pressable
+            onPress={onPress}
+            style={tw`w-11 h-11 items-center justify-center rounded-2xl ${controller.theme.primary}`}
+        >
+            <Plus size={21} color={controller.themeMode === "dark" ? "#171717" : "#ffffff"} />
+        </Pressable>
     );
 }
 

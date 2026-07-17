@@ -1,6 +1,6 @@
 import { ArrowLeft, LogIn, ShieldCheck } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import tw from "twrnc";
 
 export default function LoginView({ controller }) {
@@ -28,7 +28,7 @@ export default function LoginView({ controller }) {
 
   function submitLogin() {
     if (!loginForm.ownerName.trim() || !loginForm.businessName.trim()) {
-      Alert.alert("Missing details", "Name and Business Name are required.");
+      controller.showDialog("Missing details", "Name and Business Name are required.", "warning");
       return;
     }
     controller.login(loginForm);

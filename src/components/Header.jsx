@@ -22,7 +22,7 @@ export default function Header({ controller, title = "Customer Requirements", sh
             <Text style={tw`text-sm uppercase font-black tracking-wide ${controller.theme.accentText}`}>
               {recordTitle}
             </Text>
-            <Text style={tw`text-xl font-black ${controller.theme.text}`}>{title}</Text>
+            {title ? <Text style={tw`text-xl font-black ${controller.theme.text}`}>{title}</Text> : null}
           </View>
         </View>
 
