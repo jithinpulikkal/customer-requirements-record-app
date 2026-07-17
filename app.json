@@ -6,10 +6,20 @@
     "orientation": "portrait",
     "icon": "./src/icon/icon.png",
     "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./src/icon/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#171717"
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/icon/icon.png",
         "backgroundColor": "#eef0f4"
+      },
+      "splash": {
+        "image": "./src/icon/icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#171717"
       },
       "package": "com.rvjn.customerrequirements"
     },
