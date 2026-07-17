@@ -7,19 +7,20 @@
     "icon": "./src/icon/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./src/icon/icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#171717"
+      "image": "./src/icon/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#0058dc"
     },
     "android": {
+      "icon": "./src/icon/icon-launcher.png",
       "adaptiveIcon": {
-        "foregroundImage": "./src/icon/icon.png",
+        "foregroundImage": "./src/icon/icon-launcher.png",
         "backgroundColor": "#eef0f4"
       },
       "splash": {
-        "image": "./src/icon/icon.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#171717"
+        "image": "./src/icon/splash.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#0058dc"
       },
       "package": "com.rvjn.customerrequirements"
     },
