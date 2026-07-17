@@ -4,20 +4,20 @@
     "slug": "customer-requirements",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/icon/icon.jpg",
+    "icon": "./src/icon/icon.png",
     "userInterfaceStyle": "light",
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/icon/icon.jpg",
+        "foregroundImage": "./src/icon/icon.png",
         "backgroundColor": "#eef0f4"
       },
       "package": "com.rvjn.customerrequirements"
     },
     "ios": {
-      "icon": "./src/icon/icon.jpg"
+      "icon": "./src/icon/icon.png"
     },
     "web": {
-      "favicon": "./src/icon/icon.jpg"
+      "favicon": "./src/icon/icon.png"
     },
     "assetBundlePatterns": [
       "**/*"
